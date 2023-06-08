@@ -50,8 +50,16 @@
   :group 'multilign)
 
 (defcustom multilign-display-char ?·
-  "Character to display in the padding."
-  :type 'character
+  "Character to display in the padding.
+Make sure your fixed-space font supports it!"
+  :type '(choice (const :tag "Dots" ?·)
+                 (const :tag "Waves" ?~)
+                 (const :tag "Grids" ?┼)
+                 (const :tag "Stripes" ?│)
+                 (const :tag "Hatches" ?\\)
+                 (const :tag "Splotches" ?✱)
+                 (const :tag "Nothingness" ?\s)
+                 character)
   :group 'multilign)
 
 (defcustom multilign-affect-wrapped-lines t
