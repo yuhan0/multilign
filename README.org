@@ -1,0 +1,18 @@
+~multilign.el~ is a tiny minor mode for displaying multiline string literals with padded indents,
+correctly aligning continuation lines to the first line of text (per the string's output).
+
+It is entirely a display property, using font-lock-mode to apply and update visible portions of the buffer, and does *not* make any modifications to the underlying text.
+
+
+Configuration:
+
+Clone this repo with Elpaca / straight.el, or just copy the 100 or so lines of code to your config file.
+
+Add to any major-mode hook
+#+begin_src emacs-lisp
+(add-hook 'emacs-lisp-mode-hook #'multilign-mode) ;; recommended
+#+end_src
+
+Disclaimer:
+
+This is a fairly new package, mainly tested so far on lisp-y modes and on Emacs 29.1 where it caused a number of crashes during development due to jit-lock freezing up the UI in a loop. I've added some guards against this happening but bug reports are welcome 🐛
