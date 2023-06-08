@@ -1,4 +1,4 @@
-;; multilign.el --- Helpign you align strigns! -*- lexical-binding: t; -*-
+;; multilign.el --- Aligne thyne multílynne ſtryngges -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023 Yu Han Quek
 
@@ -103,7 +103,7 @@ will also be indented to the starting column."
 
 (define-minor-mode multilign-mode
   "Visually align multiline strings with line paddings."
-  :lighter " lign" :keymap nil
+  :lighter " ǉn" :keymap nil
   (if multilign-mode
       (progn
         (font-lock-add-keywords nil '((multilign--propertize)))
