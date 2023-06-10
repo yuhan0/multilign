@@ -44,6 +44,8 @@
 
 ;;; Code:
 
+(require 'thingatpt)
+
 (defface multilign-padding-face
   '((t :inherit whitespace-newline))
   "Face used to propertize multiline string paddings."
@@ -69,38 +71,32 @@ will also be indented to the starting column."
   :type 'boolean
   :group 'multilign)
 
-(defun multilign--propertize (end)
-  "Append line prefixes to multiline strings between point and END."
-  (let (success)
+(defun multilign--propertize (limit)
+  "Append line prefixes to multiline strings between point and LIMIT."
+  (let (bnds success)
     (unwind-protect
-        (let ((ppss (syntax-ppss)))
-          (when (not (nth 3 ppss)) ;; Not in a string, look for next one
-            (while (and (< (point) end) ;; syntax-ppss moves point by itself
-                        (not (nth 3 (syntax-ppss (1+ (point))))))))
-          ;; NOTE: Even though relying on the syntax table seems more suitable
-          ;; ie. (skip-forward-syntax "^\""), I couldn't get it working without
-          ;; crashing Emacs on various edge cases, eg. escaped string quotes.
-          ;; Constantly ppss'ing in a while-loop feels ickier but it's probably fine.
-          (when (< (point) end)
-            (let ((beg (or (nth 8 ppss) ;; if original pt was already string
-                           (1- (point))))) ;; set BEG to the left of starting quote
-              (while (and (< (point) end) ;; and stop directly before end quote
-                          (nth 3 (syntax-ppss (1+ (point))))))
-              (when (< (line-number-at-pos beg) (line-number-at-pos)) ;; multiline!
-                (let* ((indent (save-excursion (goto-char beg)
-                                               (current-column)))
-                       (padding (propertize
-                                 (make-string (1+ indent) (or multilign-display-char ?\s))
-                                 'face 'multilign-padding-face)))
-                  (put-text-property beg (point) 'line-prefix padding)
+        (progn
+          (while (and (< (point) limit)
+                      (not (setq bnds (bounds-of-thing-at-point 'string))))
+            ;; place point before the next string quote/fence and try again
+            (forward-char 1)
+            (skip-syntax-forward "^|\"" limit))
+          (if (not bnds)
+              (goto-char limit)
+            (let ((beg (car bnds))
+                  (end (cdr bnds)))
+              (when (< (line-number-at-pos beg) (line-number-at-pos end))
+                ;; Multiline string - skip past the starting quotes
+                (goto-char beg)
+                (skip-syntax-forward "|\"")
+                (let ((padding (propertize
+                                (make-string (current-column)
+                                             (or multilign-display-char ?\s))
+                                'face 'multilign-padding-face)))
+                  (put-text-property (point) end 'line-prefix padding)
                   (when multilign-affect-wrapped-lines
-                    (put-text-property beg (point) 'wrap-prefix padding))))))
-          ;; Turns out font-lock-keywords are expected to set at least (match-data 0),
-          ;; even if no faces are actually specified by it.
-          ;; We didn't do any regexp matching or searching in this function, so sometimes
-          ;; a (match-beginning 0) called afterwards would return nil, which breaks
-          ;; assumptions in font-lock causing cryptic errors to surface.
-          (set-match-data (list (1- (point)) (point)))
+                    (put-text-property (point) end 'wrap-prefix padding))))
+              (goto-char end)))
           (setq success t))
       (or success ;; Something went wrong! Abort to avoid breaking Emacs entirely
           (multilign-mode -1)
